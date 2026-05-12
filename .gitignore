@@ -1,0 +1,59 @@
+# =========================
+# SmellyCat .gitignore
+# =========================
+
+# === Rust / Tauri ===
+# 编译产物（1-3GB，会重新生成）
+src-tauri/target/
+src-tauri/gen/
+
+# Rust 调试
+**/*.rs.bk
+Cargo.lock
+
+# === NPM / Node.js ===
+# 依赖库（50MB，会重新安装）
+node_modules/
+package-lock.json
+
+# === 日志文件 ===
+*.log
+logs/
+
+# === 临时文件 ===
+temp/
+tmp/
+*.tmp
+*.temp
+
+# === 操作系统 ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# === IDE / 编辑器 ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# === 构建产物 ===
+dist/
+build/
+*.exe
+*.msi
+*.app
+*.deb
+*.rpm
+
+# === 测试/调试 ===
+coverage/
+.nyc_output/

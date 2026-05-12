@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>SmellyCat</title>
+    <style>*{margin:0;padding:0}html,body{width:100%;height:100%;overflow:hidden;background:transparent}#c{width:100%;height:100%}</style>
+</head>
+<body>
+<div id="c"></div>
+<script src="pixi.min.js"></script>
+<script src="core/Config.js"></script>
+<script src="engine/TailPhysics.js"></script>
+<script src="engine/AnimationEngine.js"></script>
+<script src="engine/actions/idle.js"></script>
+<script src="engine/actions/headTilt.js"></script>
+<script src="engine/actions/tailWag.js"></script>
+<script src="engine/actions/stretch.js"></script>
+<script src="engine/actions/lookAround.js"></script>
+<script src="engine/actions/sit.js"></script>
+<script src="engine/actions/pawLick.js"></script>
+<script src="skins/GeometryCatSkin.js"></script>
+<script>
+(function(){
+    console.log('=== SmellyCat ===');
+    try {
+        if(typeof PIXI==='undefined'){console.error('PIXI 未加载');return;}
+        const app = new PIXI.Application();
+        app.init({width:400,height:400,backgroundColor:0,backgroundAlpha:0,antialias:true,resolution:window.devicePixelRatio||1}).then(function(){
+            console.log('✅ App init');
+            document.getElementById('c').appendChild(app.canvas);
+            const engine = new AnimationEngine();
+            console.log('✅ Engine');
+            engine.register('idle',{weight:1.0,duration:[3000,7000],update:actionIdleUpdate});
+            engine.register('headTilt',{weight:0.8,duration:[1500,3000],update:actionHeadTiltUpdate});
+            engine.register('tailWag',{weight:0.7,duration:[2000,4000],update:actionTailWagUpdate});
+            engine.register('stretch',{weight:0.5,duration:[1500,2500],update:actionStretchUpdate});
+            engine.register('lookAround',{weight:0.6,duration:[2000,3500],update:actionLookAroundUpdate});
+            engine.register('sit',{weight:0.4,duration:[3000,5000],update:actionSitUpdate});
+            engine.register('pawLick',{weight:0.3,duration:[2000,3000],update:actionPawLickUpdate});
+            console.log('✅ Actions');
+            const skin = new GeometryCatSkin(app);
+            console.log('✅ Skin');
+            engine.setSkin(skin);
+            console.log('✅ Bind');
+            let dragOff={x:0,y:0};
+            app.canvas.addEventListener('mousedown',function(e){
+                const r=app.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+                const dx=x-skin.container.x,dy=y-skin.container.y;
+                if(Math.sqrt(dx*dx+dy*dy)<80){engine.setDrag(true);dragOff.x=dx;dragOff.y=dy;}
+            });
+            app.canvas.addEventListener('mousemove',function(e){
+                if(!engine.dragging)return;
+                const r=app.canvas.getBoundingClientRect();
+                skin.container.x=e.clientX-r.left-dragOff.x;
+                skin.container.y=e.clientY-r.top-dragOff.y;
+            });
+            app.canvas.addEventListener('mouseup',function(){engine.setDrag(false);});
+            app.canvas.addEventListener('mouseleave',function(){engine.setDrag(false);});
+            app.ticker.add(function(){engine.update(app.ticker.elapsedMS);});
+            console.log('🎉 Running!');
+        }).catch(function(err){console.error('Init error:',err);});
+    }catch(e){console.error('Fatal:',e);}
+})();
+</script>
+</body>
+</html>
