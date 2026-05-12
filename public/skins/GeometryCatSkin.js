@@ -57,10 +57,10 @@ class GeometryCatSkin {
         g.stroke({ width: 2, color: c.outline });
         
         // 耳朵
-        g.poly([-18, -60, -8, -75, -5, -55]);
+        g.polygon([-18, -60, -8, -75, -5, -55]);
         g.fill({ color: c.body });
         g.stroke({ width: 2, color: c.outline });
-        g.poly([18, -60, 8, -75, 5, -55]);
+        g.polygon([18, -60, 8, -75, 5, -55]);
         g.fill({ color: c.body });
         g.stroke({ width: 2, color: c.outline });
         
