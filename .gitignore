@@ -1,1 +1,37 @@
-Nothing should be ignored in this case, as the only modified file is a JavaScript source file (`public/skins/GeometryCatSkin.js`) which is part of the source code and not a build artifact, dependency, or temporary file.
+```
+# Build artifacts
+target/
+dist/
+build/
+
+# Dependencies
+node_modules/
+vendor/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Rust/Cargo specific
+Cargo.lock
+*.rs.bk
+```
