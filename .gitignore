@@ -8,44 +8,38 @@ build/
 target/
 
 # Dependencies
-.venv/
-venv/
 node_modules/
-.julia/
-zig*/
-.jest/
-.nyc_output/
-coverage/
+venv/
+.venv/
+.env
+.env.local
+.env.*
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
-*.swo
-
-# Environment
-.env
-.env.local
-.env.*
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Testing
-.mypy_cache/
-.pytest_cache/
+# Testing and coverage
+.coverage
 coverage/
 htmlcov/
-.coverage
 
-# Archives
+# Python specific
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+
+# Compressed files
 *.zip
 *.gz
 *.tar
@@ -64,7 +58,3 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst

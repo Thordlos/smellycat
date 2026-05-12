@@ -11,84 +11,107 @@ class GeometryCatSkin {
         this.container.y = 220;
         this.gfx = this.container.addChild(new PIXI.Graphics());
         this.tailPhysics = new TailPhysics();
+        
+        // 添加日志记录
+        console.log('[GeometryCatSkin] 初始化完成');
+        console.log('[GeometryCatSkin] PIXI version:', PIXI.VERSION);
     }
     setEngine(engine) { 
         this.engine = engine;
         this.tailPhysics.setEngine(engine);
+        console.log('[GeometryCatSkin] 引擎已设置');
     }
     render(pose) {
         const g = this.gfx;
         const c = this.colors;
+        
+        console.log('[GeometryCatSkin] 开始渲染，pose:', JSON.stringify(pose));
+        
         g.clear();
         
-        // 尾巴（带物理效果）
-        this.tailPhysics.update(pose);
-        const tailPoints = this.tailPhysics.getPoints();
-        g.moveTo(tailPoints[0].x, tailPoints[0].y);
-        for (let i = 1; i < tailPoints.length; i++) {
-            g.lineTo(tailPoints[i].x, tailPoints[i].y);
+        try {
+            // 尾巴（带物理效果）
+            this.tailPhysics.update(pose);
+            const tailPoints = this.tailPhysics.getPoints();
+            console.log('[GeometryCatSkin] 尾巴点数:', tailPoints.length);
+            g.moveTo(tailPoints[0].x, tailPoints[0].y);
+            for (let i = 1; i < tailPoints.length; i++) {
+                g.lineTo(tailPoints[i].x, tailPoints[i].y);
+            }
+            g.stroke({ width: 6, color: c.body, cap: 'round' });
+            
+            // 后腿
+            console.log('[GeometryCatSkin] 绘制后腿');
+            g.ellipse(-15, 25, 8, 12);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            g.ellipse(15, 25, 8, 12);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            
+            // 身体
+            console.log('[GeometryCatSkin] 绘制身体');
+            g.ellipse(0, 0, 30, 40);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            
+            // 前腿
+            console.log('[GeometryCatSkin] 绘制前腿');
+            g.ellipse(-12, 15, 6, 15);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            g.ellipse(12, 15, 6, 15);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            
+            // 头
+            console.log('[GeometryCatSkin] 绘制头部');
+            g.circle(0, -45, 25);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            
+            // 耳朵
+            console.log('[GeometryCatSkin] 绘制耳朵');
+            g.polygon([-18, -60, -8, -75, -5, -55]);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            g.polygon([18, -60, 8, -75, 5, -55]);
+            g.fill({ color: c.body });
+            g.stroke({ width: 2, color: c.outline });
+            
+            // 眼睛
+            console.log('[GeometryCatSkin] 绘制眼睛');
+            g.circle(-8, -48, 5);
+            g.fill({ color: c.eye });
+            g.stroke({ width: 1, color: 0x000000 });
+            g.circle(8, -48, 5);
+            g.fill({ color: c.eye });
+            g.stroke({ width: 1, color: 0x000000 });
+            
+            // 鼻子
+            console.log('[GeometryCatSkin] 绘制鼻子');
+            g.circle(0, -40, 3);
+            g.fill({ color: 0xFF9999 });
+            
+            // 胡须
+            console.log('[GeometryCatSkin] 绘制胡须');
+            g.moveTo(-10, -40);
+            g.lineTo(-30, -35);
+            g.moveTo(-10, -40);
+            g.lineTo(-30, -40);
+            g.moveTo(-10, -40);
+            g.lineTo(-30, -45);
+            g.moveTo(10, -40);
+            g.lineTo(30, -35);
+            g.moveTo(10, -40);
+            g.lineTo(30, -40);
+            g.moveTo(10, -40);
+            g.lineTo(30, -45);
+            g.stroke({ width: 1, color: c.outline });
+            
+            console.log('[GeometryCatSkin] 渲染完成');
+        } catch (error) {
+            console.error('[GeometryCatSkin] 渲染错误:', error);
         }
-        g.stroke({ width: 6, color: c.body, cap: 'round' });
-        
-        // 后腿
-        g.ellipse(-15, 25, 8, 12);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        g.ellipse(15, 25, 8, 12);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        
-        // 身体
-        g.ellipse(0, 0, 30, 40);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        
-        // 前腿
-        g.ellipse(-12, 15, 6, 15);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        g.ellipse(12, 15, 6, 15);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        
-        // 头
-        g.circle(0, -45, 25);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        
-        // 耳朵
-        g.polygon([-18, -60, -8, -75, -5, -55]);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        g.polygon([18, -60, 8, -75, 5, -55]);
-        g.fill({ color: c.body });
-        g.stroke({ width: 2, color: c.outline });
-        
-        // 眼睛
-        g.circle(-8, -48, 5);
-        g.fill({ color: c.eye });
-        g.stroke({ width: 1, color: 0x000000 });
-        g.circle(8, -48, 5);
-        g.fill({ color: c.eye });
-        g.stroke({ width: 1, color: 0x000000 });
-        
-        // 鼻子
-        g.circle(0, -40, 3);
-        g.fill({ color: 0xFF9999 });
-        
-        // 胡须
-        g.moveTo(-10, -40);
-        g.lineTo(-30, -35);
-        g.moveTo(-10, -40);
-        g.lineTo(-30, -40);
-        g.moveTo(-10, -40);
-        g.lineTo(-30, -45);
-        g.moveTo(10, -40);
-        g.lineTo(30, -35);
-        g.moveTo(10, -40);
-        g.lineTo(30, -40);
-        g.moveTo(10, -40);
-        g.lineTo(30, -45);
-        g.stroke({ width: 1, color: c.outline });
     }
 }
