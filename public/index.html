@@ -2,11 +2,65 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>SmellyCat - Realistic Cat</title>
-    <style>*{margin:0;padding:0}html,body{width:100%;height:100%;overflow:hidden;background:transparent}#c{width:100%;height:100%}</style>
+    <title>SmellyCat - Desktop Pet</title>
+    <style>
+        *{margin:0;padding:0}
+        html,body{width:100%;height:100%;overflow:hidden;background:transparent}
+        #c{width:100%;height:100%}
+
+        /* 皮肤切换按钮 */
+        .skin-bar {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .skin-bar:hover { opacity: 1; }
+        .skin-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .skin-dot:hover { transform: scale(1.3); }
+        .skin-dot.active { box-shadow: 0 0 4px 2px rgba(255,255,255,0.8); }
+        .skin-dot[data-skin="TabbyCat"] { background: #C4915C; }
+        .skin-dot[data-skin="GingerCat"] { background: #FF9933; }
+        .skin-dot[data-skin="CowCat"] { background: #1A1A1A; }
+
+        /* 皮肤名称提示 */
+        .skin-label {
+            position: fixed;
+            bottom: 22px;
+            right: 8px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            font-family: sans-serif;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .skin-bar:hover ~ .skin-label,
+        .skin-label:hover { opacity: 1; }
+    </style>
 </head>
 <body>
 <div id="c"></div>
+
+<!-- 皮肤切换 UI -->
+<div class="skin-bar" id="skinBar">
+    <div class="skin-dot" data-skin="TabbyCat" title="狸花猫"></div>
+    <div class="skin-dot" data-skin="GingerCat" title="橘猫"></div>
+    <div class="skin-dot active" data-skin="CowCat" title="奶牛猫"></div>
+</div>
+<div class="skin-label" id="skinLabel">RealisticCat</div>
+
 <script src="pixi.min.js"></script>
 <script src="engine/TailPhysics.js"></script>
 <script src="engine/AnimationEngine.js"></script>
@@ -17,26 +71,30 @@
 <script src="engine/actions/lookAround.js"></script>
 <script src="engine/actions/sit.js"></script>
 <script src="engine/actions/pawLick.js"></script>
-<!-- 皮肤选择：取消注释要使用的皮肤 -->
-<!-- <script src="skins/GeometryCatSkin.js"></script> -->
-<!-- <script src="skins/CuteCatSkin.js"></script> -->
-<script src="skins/RealisticCatSkin.js"></script>
+<script src="engine/actions/surprise.js"></script>
+<script src="engine/actions/purr.js"></script>
+<!-- 加载所有皮肤 -->
+<script src="skins/TabbyCatSkin.js"></script>
+<script src="skins/GingerCatSkin.js"></script>
+<script src="skins/CowCatSkin.js"></script>
+<script src="core/SkinManager.js"></script>
+<script src="core/StateManager.js"></script>
 <script>
 (function(){
-    console.log('=== SmellyCat v0.6 - Realistic Cat ===');
+    console.log('=== SmellyCat v0.7 - Multi Skin ===');
     try {
-        if(typeof PIXI==='undefined'){console.error('❌ PIXI 未加载');return;}
-        console.log('✅ PIXI:', PIXI.VERSION);
-        
+        if(typeof PIXI==='undefined'){console.error('PIXI not loaded');return;}
+        console.log('PIXI:', PIXI.VERSION);
+
         const app = new PIXI.Application();
         app.init({width:400,height:400,backgroundColor:0,backgroundAlpha:0,antialias:true,resolution:window.devicePixelRatio||1})
-        .then(function(){
-            console.log('✅ App init');
+        .then(async function(){
+            console.log('App init');
             document.getElementById('c').appendChild(app.canvas);
-            
+
             const engine = new AnimationEngine();
-            console.log('✅ Engine');
-            
+            console.log('Engine');
+
             engine.register('idle',{weight:1.0,duration:[3000,7000],update:actionIdleUpdate});
             engine.register('headTilt',{weight:0.8,duration:[1500,3000],update:actionHeadTiltUpdate});
             engine.register('tailWag',{weight:0.7,duration:[2000,4000],update:actionTailWagUpdate});
@@ -44,33 +102,100 @@
             engine.register('lookAround',{weight:0.6,duration:[2000,3500],update:actionLookAroundUpdate});
             engine.register('sit',{weight:0.4,duration:[3000,5000],update:actionSitUpdate});
             engine.register('pawLick',{weight:0.3,duration:[2000,3000],update:actionPawLickUpdate});
-            console.log('✅ Actions:', Object.keys(engine.actions).length);
-            
-            console.log('创建 RealisticCatSkin...');
-            const skin = new RealisticCatSkin(app);
-            console.log('✅ Skin');
-            engine.setSkin(skin);
-            console.log('✅ Bind');
-            
-            let dragOff={x:0,y:0};
+            // 反馈动作（点击触发，不参与状态机随机选择）
+            engine.register('surprise',{weight:0,duration:[0,0],update:actionSurpriseUpdate});
+            engine.register('purr',{weight:0,duration:[0,0],update:actionPurrUpdate});
+            console.log('Actions:', Object.keys(engine.actions).length);
+
+            // 皮肤管理器 + 状态管理器
+            const skinManager = new SkinManager(app, engine);
+            const stateManager = new StateManager();
+
+            // 加载保存的状态
+            var saved = await stateManager.load();
+            var startSkin = 'CowCat';
+            if (saved && saved.skinName && skinManager.getSkinNames().includes(saved.skinName)) {
+                startSkin = saved.skinName;
+            }
+            skinManager.switchSkin(startSkin);
+            if (saved && saved.x != null && saved.y != null && engine.skin) {
+                engine.skin.container.x = saved.x;
+                engine.skin.container.y = saved.y;
+            }
+            console.log('SkinManager ready, skins:', skinManager.getSkinNames().join(', '));
+
+            // 保存状态到文件
+            function persistState() {
+                var skin = engine.skin;
+                if (!skin) return;
+                stateManager.save({
+                    x: skin.container.x,
+                    y: skin.container.y,
+                    skinName: skinManager.getCurrentSkinName()
+                });
+            }
+
+            // 更新 UI 状态（同时保存）
+            function updateSkinUI(name) {
+                document.querySelectorAll('.skin-dot').forEach(function(dot){
+                    dot.classList.toggle('active', dot.dataset.skin === name);
+                });
+                document.getElementById('skinLabel').textContent = name;
+                persistState();
+            }
+            updateSkinUI(startSkin);
+
+            // 按钮点击切换
+            document.querySelectorAll('.skin-dot').forEach(function(dot){
+                dot.addEventListener('click', function(){
+                    var name = dot.dataset.skin;
+                    if(skinManager.switchSkin(name)) updateSkinUI(name);
+                });
+            });
+
+            // 快捷键 1/2/3 切换皮肤
+            document.addEventListener('keydown', function(e){
+                var map = {'1':'TabbyCat','2':'GingerCat','3':'CowCat'};
+                if(map[e.key] && skinManager.switchSkin(map[e.key])) updateSkinUI(map[e.key]);
+            });
+
+            // 拖拽 + 鼠标追踪 + 点击反馈
+            var dragOff={x:0,y:0};
             app.canvas.addEventListener('mousedown',function(e){
-                const r=app.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
-                const dx=x-skin.container.x,dy=y-skin.container.y;
-                if(Math.sqrt(dx*dx+dy*dy)<80){engine.setDrag(true);dragOff.x=dx;dragOff.y=dy;}
+                var r=app.canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+                var skin = engine.skin;
+                if(!skin) return;
+                var dx=x-skin.container.x,dy=y-skin.container.y;
+                var dist = Math.sqrt(dx*dx+dy*dy);
+                if(dist<80){
+                    engine.setDrag(true);
+                    dragOff.x=dx;dragOff.y=dy;
+                } else if(dist<140){
+                    var fb = Math.random()<0.5 ? 'surprise' : 'purr';
+                    engine.triggerFeedback(fb, fb==='surprise'?800:1200);
+                }
             });
             app.canvas.addEventListener('mousemove',function(e){
-                if(!engine.dragging)return;
-                const r=app.canvas.getBoundingClientRect();
+                var r=app.canvas.getBoundingClientRect();
+                var x=e.clientX-r.left,y=e.clientY-r.top;
+                var skin = engine.skin;
+                if(skin){
+                    var cx = skin.container.x || 200;
+                    var cy = (skin.container.y || 220) - 45;
+                    engine.setMouse(x-cx, y-cy);
+                }
+                if(!engine.dragging) return;
+                if(!skin) return;
                 skin.container.x=e.clientX-r.left-dragOff.x;
                 skin.container.y=e.clientY-r.top-dragOff.y;
             });
-            app.canvas.addEventListener('mouseup',function(){engine.setDrag(false);});
-            app.canvas.addEventListener('mouseleave',function(){engine.setDrag(false);});
-            
+            app.canvas.addEventListener('mouseup',function(){engine.setDrag(false);persistState();});
+            app.canvas.addEventListener('mouseleave',function(){engine.setDrag(false);persistState();});
+
             app.ticker.add(function(){
                 try { engine.update(app.ticker.elapsedMS); } catch(e) { console.error('Update:',e); }
             });
-            console.log('🎉 Realistic Cat 运行中!');
+            console.log('SmellyCat running!');
         })
         .catch(function(err){ console.error('Init:',err); });
     } catch(e) { console.error('Fatal:',e); }
